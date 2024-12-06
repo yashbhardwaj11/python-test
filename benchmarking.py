@@ -4,30 +4,33 @@ import pandas as pd
 def calculate_kpis(file_path):
     try:
         # Load the Excel file
-        data = pd.ExcelFile(file_path)
-        
-        # Assuming the Excel file has specific sheets for each KPI
-        response_data = data.parse('ResponseTime')
-        throughput_data = data.parse('Throughput')
-        status_data = data.parse('Status')
-        cpu_data = data.parse('CPU')
-        memory_data = data.parse('Memory')
+        data = pd.read_excel(file_path)
+
+        # Check if all required columns are present
+        required_columns = [
+            "Average Response Time (ms)", "Failed Responses",
+            "Successful Responses", "CPU Usage (%)", "Memory Usage (MB)"
+        ]
+        for column in required_columns:
+            if column not in data.columns:
+                raise ValueError(f"Column '{column}' not found in the file.")
 
         # KPI Calculations
-        avg_response_time = response_data['ResponseTime'].mean()
-        total_throughput = throughput_data['Requests'].sum()
-        success_rate = (status_data['Success'].sum() / status_data['Total'].sum()) * 100
-        failure_rate = (status_data['Failure'].sum() / status_data['Total'].sum()) * 100
-        avg_cpu_usage = cpu_data['CPUUsage'].mean()
-        avg_memory_usage = memory_data['MemoryUsage'].mean()
+        avg_response_time = data["Average Response Time (ms)"].mean()
+        throughput = data["Successful Responses"].sum()
+        total_requests = throughput + data["Failed Responses"].sum()
+        success_rate = (throughput / total_requests) * 100 if total_requests > 0 else 0
+        failure_rate = (data["Failed Responses"].sum() / total_requests) * 100 if total_requests > 0 else 0
+        avg_cpu_usage = data["CPU Usage (%)"].mean()
+        avg_memory_usage = data["Memory Usage (MB)"].mean()
 
         # Print KPIs
-        print(avg_response_time)
-        print(total_throughput)
-        print(success_rate)
-        print(failure_rate)
-        print(avg_cpu_usage)
-        print(avg_memory_usage)
+        print("Average Response Time (ms):", avg_response_time)
+        print("Throughput (Successful Responses):", throughput)
+        print("Success Rate (%):", success_rate)
+        print("Failure Rate (%):", failure_rate)
+        print("Average CPU Usage (%):", avg_cpu_usage)
+        print("Average Memory Usage (MB):", avg_memory_usage)
 
     except Exception as e:
         print("Error occurred while processing the file:", e)
